@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+        <title>김해시청 PoC</title>
+        <link rel="stylesheet" href="style.css">
+        <script src="https://d3js.org/d3.v3.min.js"></script>
+        <script src="https://d3js.org/d3-collection.v1.min.js"></script>
+        <script src="https://d3js.org/d3-dispatch.v1.min.js"></script>
+        <script src="https://d3js.org/d3-request.v1.min.js"></script>
+        <script src="https://d3js.org/d3-timer.v1.min.js"></script>
+
+    </head>
+    <body>
+    <script>
+
+        function render(){
+            C1=0, C2=0;
+            C1_color = "", C2_color = "";
+
+            d3.select("body").append("svg").remove();
+
+            var canvas = d3.select("body").append("svg")
+                .attr("width",1000)
+                .attr("height",600);
+
+            //d3.request("/api/v1/presence")
+            d3.request("presence")
+                .header("Authorization", "Basic YWRta.....")
+                .get(function(error,data){
+                if (error) throw error;
+                data = JSON.parse(data.responseText);
+                data["Presence_result"].forEach(function(d){
+                    if(d["msg"]["ap_name"] === "AP277") {
+                        C1 = C1+1;
+                    } else {
+                        C2 = C2+1;
+                    }
+                });
+
+                if(C1 > 300) { C1_color = "red";
+                } else if(C1 > 200) { C1_color = "green";
+                } else { C1_color = "yellow";
+                }
+                if(C2 > 300) { C2_color = "red";
+                } else if(C2 > 200) { C2_color = "green";
+                } else { C2_color = "yellow";
+                }
+
+                var circle1 = canvas.append("circle")
+                    .attr("cx",550)
+                    .attr("cy",250)
+                    .attr("r",100)
+                    .attr("fill",C1_color)
+                    .on("click", function(d) {
+                        location.href="/poc/list.html?ap_name=AP277";
+                    });
+                var text1 = canvas.append("text")
+                    .attr("x",550-10)
+                    .attr("y",250)
+                    .text(C1);
+
+                var circle2 = canvas.append("circle")
+                    .attr("cx",800)
+                    .attr("cy",420)
+                    .attr("r",100)
+                    .attr("fill",C2_color)
+                    .on("click", function(d) {
+                        location.href="/poc/list.html?ap_name=AP367";
+                    });
+                var text2 = canvas.append("text")
+                    .attr("x",800-10)
+                    .attr("y",420)
+                    .text(C2);
+        });
+    }
+
+    render();
+    //d3.interval(render, 10000);
+    </script>
+
+    </body>
+</html>

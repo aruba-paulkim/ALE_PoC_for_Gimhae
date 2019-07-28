@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+        <title>김해시청 PoC</title>
+        <link rel="stylesheet" href="style.css">
+        <script src="https://d3js.org/d3.v3.min.js"></script>
+        <script src="https://d3js.org/d3-collection.v1.min.js"></script>
+        <script src="https://d3js.org/d3-dispatch.v1.min.js"></script>
+        <script src="https://d3js.org/d3-request.v1.min.js"></script>
+        <script src="https://d3js.org/d3-timer.v1.min.js"></script>
+    </head>
+    <body>
+        <script type="text/javascript">
+            function timeConverter(UNIX_timestamp){
+                var a = new Date(UNIX_timestamp * 1000);
+                //var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                var months = ['01','02','03','04','05','06','07','08','09','10','11','12'];
+                var year = a.getFullYear();
+                var month = months[a.getMonth()];
+                var date = a.getDate();
+                if(date < 10) {date = '0'+date;}
+                var hour = a.getHours();
+                var min = a.getMinutes();
+                var sec = a.getSeconds();
+                var time = year+'-'+month+'-'+date+' '+hour+':'+min+':'+sec ;
+                return time;
+            }
+
+            var listing = "";
+            if (window.location.search.indexOf("AP277") > 0){
+                listing = "AP277";
+            } else {
+                listing = "AP367";
+            }
+
+            d3.request("presence")
+                .header("Authorization", "Basic YWRta.....")
+                .get(function(error,data){
+                if (error) throw error;
+                data = JSON.parse(data.responseText);
+                //console.log(data);
+
+                var sortAscending = true;
+                var table = d3.select('body').append('table');
+                var titles = ["No","AP Name","Client MAC","Associated","Time"]
+                console.log(titles);
+                var headers = table.append('thead').append('tr')
+                    .selectAll('th')
+                    .data(titles).enter()
+                    .append('th')
+                    .text(function (d) {
+                        return d;
+                    });
+/*
+                    .on('click', function (d) {
+                        headers.attr('class', 'header');
+                        if (sortAscending) {
+                            rows.sort(function(a, b) { return b[d] < a[d]; });
+                            sortAscending = false;
+                            this.className = 'aes';
+                        } else {
+                            rows.sort(function(a, b) { return b[d] > a[d]; });
+                            sortAscending = true;
+                            this.className = 'des';
+                        }
+                    });
+*/
+
+                dp = data["Presence_result"];
+                var rows = table.append('tbody').selectAll('tr')
+                    .data(dp).enter()
+                    .append('tr');
+                cnt = 0;
+                rows.selectAll('td')
+                    .data(function (d) {
+                        if(listing == d["msg"]["ap_name"]) {
+                            cnt = cnt+1;
+                            return titles.map(function (k) {                                
+                                if(k == "No") {
+                                    return { 'value': cnt, 'name': k};
+                                } else if(k == "AP Name") {
+                                    return { 'value': d["msg"]["ap_name"], 'name': k};
+                                } else if(k == "Client MAC") {
+                                    return { 'value': d["msg"]["sta_eth_mac"]["addr"], 'name': k};
+                                } else if(k == "Associated") {
+                                    return { 'value': d["msg"]["associated"], 'name': k};
+                                } else if(k == "Time") {
+                                    return { 'value': timeConverter(d["ts"]), 'name': k};
+                                }
+                            });
+                        } else {
+                            return {};
+                        }
+                    }).enter()
+                    .append('td')
+                    .attr('data-th', function (d) {
+                        return d.name;
+                    })
+                    .text(function (d) {
+                        return d.value;
+                    });
+
+                });
+    </script>
+    </body>
+
+</html>
